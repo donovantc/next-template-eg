@@ -1,0 +1,96 @@
+syntax = "proto3";
+package template;
+
+import "google/api/annotations.proto";
+
+enum CategoryGroup {
+  UNDEFINED_CATEGORY_GROUP = 0;
+
+  ELECTRONICS = 1;
+  PC_COMPONENT = 2;
+  BIKE = 3;
+  TIRES = 4;
+  BABYSTROLLER = 5;
+}
+
+// TemplateConfig contains master template reference, and optional references of components which can be overwritten
+message TemplateConfig {
+  string id = 1;
+  string master_template = 2;
+  map<string, string> components = 3;
+  repeated Selector selectors = 4;
+
+  message Selector {
+    string location = 1;
+    string action_button = 2;
+  }
+}
+
+message Insurer {
+  string id = 1;
+  string name = 2;
+  string logo = 3;
+}
+
+message InsuranceProduct {
+  string product_code = 1;
+  // period.Period duration = 2;
+  // period.Period frequency = 3;
+  // money.Money retail_price = 4;
+  // repeated catalog.Coverage coverages = 5;
+  // catalog.Category category = 6;
+  string tnc_url = 7;
+  string pib_url = 8;
+}
+
+message GetTemplateConfigRequest {
+  string shop_id = 1;
+  string country = 2;
+  string language = 3;
+  CategoryGroup category_group = 4;
+  bool supports_tariff_selection = 5;
+  bool supports_duration_selection = 6;
+  bool supports_frequency_selection = 7;
+  int32 screen_width = 8;
+  string user_agent = 9;
+}
+
+message GetTemplateConfigReply {
+  repeated TemplateConfig variations = 1;
+}
+
+message RenderCorePluginRequest {
+  string shop_id = 1;
+  string language = 2;
+  TemplateConfig config = 3;
+  repeated Item cart = 4;
+  repeated InsuranceProduct upsale = 5;
+  string token = 6;
+  Insurer insurer = 7;
+
+  message Item {
+    int32 item_reference = 1;
+    string item_name = 2;
+    InsuranceProduct product = 3;
+  }
+}
+
+message ContentReply {
+  bytes reply = 1;
+}
+
+service PluginTemplateService {
+  rpc GetTemplateConfig (GetTemplateConfigRequest) returns (GetTemplateConfigReply) {
+    option (google.api.http) = {
+      post: "/v1/template.PluginTemplateService/GetTemplateConfig"
+      body: "*"
+    };
+  };
+
+  rpc RenderCore (RenderCorePluginRequest) returns (ContentReply) {
+    option (google.api.http) = {
+      post: "/v1/template.PluginTemplateService/RenderCore"
+      body: "*"
+    };
+  };
+}
